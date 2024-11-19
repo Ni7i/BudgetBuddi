@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BudgetBuddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    .container {
+      position: absolute;
+      top: 16px;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .header-image {
+      height: 100vh;
+      width: 100%;
+      object-fit: cover;
+      filter: brightness(50%);
+    }
+
+    .logo {
+      width: 120px;
+      height: auto;
+    }
+
+    .menu {
+      display: flex;
+      gap: 16px;
+    }
+
+    .menu-link {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .menu-link:hover {
+      text-decoration: underline;
+    }
+
+    .headline {
+      position: absolute;
+      left: 50px;
+      top: 300px;
+      color: white;
+      font-size: 70px;
+      width: 500px;
+      text-shadow: 5px 10px 5px rgba(0, 0, 0, 0.4);
+    }
+
+    .yellow {
+      color: yellow;
+    }
+
+    .description-section {
+      display: flex;
+      justify-content: space-between;
+      padding: 30px 100px;
+      margin-top: 50px;
+    }
+
+    .half-width {
+      width: 48%;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 20px;
+    }
+
+    .input-field {
+      padding: 8px;
+      font-size: 16px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .button {
+      background-color: yellow;
+      padding: 8px 30px;
+      color: black;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .positive {
+      color: green;
+    }
+
+    .negative {
+      color: red;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #333;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <img class="header-image" src="img/background.jpg" alt="Hintergrundbild">
+  
+  <div class="container">
+    <img src="img/Logo.png" class="logo" alt="Logo">
+    <div class="menu">
+      <a class="menu-link" href="index.html">Home</a>
+      <a class="menu-link" href="kontakt.html">Kontakt</a>
+      <a class="menu-link" href="impressum.html">Impressum</a>
+      <a class="menu-link button" href="#" onclick="window.location.href = 'login.html';">Login</a>
+    </div>
+  </div>
+
+  <h1 class="headline">Wollen Sie ganz einfach <span class="yellow">Ihre Sparziele</span> erreichen?</h1>
+  
+  <h2>Geben Sie Ihre finanziellen Daten ein!</h2>
+
+  <div class="description-section">
+    <div class="half-width">
+      <canvas id="budgetChart"></canvas>
+    </div>
+    <div class="half-width">
+      <div class="input-container">
+        <label for="einnahmen">Einnahmen (CHF):</label>
+        <input type="number" id="einnahmen" class="input-field" placeholder="Einnahmen eingeben">
+      </div>
+      <div class="input-container">
+        <label for="ausgaben">Ausgaben (CHF):</label>
+        <input type="number" id="ausgaben" class="input-field" placeholder="Ausgaben eingeben">
+      </div>
+      <div class="input-container">
+        <button onclick="berechneBudget()" class="button">Berechne Budget</button>
+      </div>
+      <div id="result"></div>
+      <div class="input-container">
+        <label for="sparziel">Sparziel (CHF):</label>
+        <input type="number" id="sparziel" class="input-field" placeholder="Sparziel eingeben">
+      </div>
+      <div class="input-container">
+        <label for="zeitraum">Zeitraum (Monate):</label>
+        <input type="number" id="zeitraum" class="input-field" placeholder="Zeitraum in Monaten">
+      </div>
+      <div>
+        <button onclick="berechneSparziel()" class="button">Berechne Sparziel</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2024 BudgetBuddy. Alle Rechte vorbehalten.</p>
+  </footer>
+
+  <script>
+    const ctx = document.getElementById('budgetChart').getContext('2d');
+    const budgetChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Einnahmen', 'Ausgaben', 'Verfügbares Budget', 'Monatliches Sparziel'],
+        datasets: [{
+          label: 'Finanzen (CHF)',
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#4caf50', '#f44336', '#2196f3', '#ff9800'],
+          borderColor: ['#388e3c', '#d32f2f', '#1976d2', '#f57c00'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    function berechneBudget() {
+      const einnahmen = parseFloat(document.getElementById('einnahmen').value);
+      const ausgaben = parseFloat(document.getElementById('ausgaben').value);
+
+      if (isNaN(einnahmen) || isNaN(ausgaben)) {
+        alert("Bitte geben Sie sowohl Einnahmen als auch Ausgaben ein!");
+        return;
+      }
+
+      let saldo = einnahmen - ausgaben;
+      let resultText = "Verfügbares Budget: CHF " + saldo.toFixed(2);
+      let resultClass = saldo >= 0 ? "positive" : "negative";
+
+      document.getElementById('result').innerHTML = `<p class="${resultClass}">${resultText}</p>`;
+
+      budgetChart.data.datasets[0].data[0] = einnahmen;
+      budgetChart.data.datasets[0].data[1] = ausgaben;
+      budgetChart.data.datasets[0].data[2] = saldo;
+      budgetChart.update();
+    }
+
+    function berechneSparziel() {
+      const sparziel = parseFloat(document.getElementById('sparziel').value);
+      const zeitraum = parseInt(document.getElementById('zeitraum').value);
+
+      if (isNaN(sparziel) || isNaN(zeitraum) || zeitraum <= 0) {
+        alert("Bitte geben Sie ein gültiges Sparziel und einen Zeitraum ein!");
+        return;
+      }
+
+      let monatlichSparen = sparziel / zeitraum;
+      let resultText = `Um Ihr Sparziel von CHF ${sparziel} in ${zeitraum} Monaten zu erreichen, müssen Sie monatlich CHF ${monatlichSparen.toFixed(2)} sparen.`;
+
+      document.getElementById('result').innerHTML += `<p class="positive">${resultText}</p>`;
+
+      budgetChart.data.datasets[0].data[3] = monatlichSparen;
+      budgetChart.update();
+    }
+  </script>
+</body>
+</html>
